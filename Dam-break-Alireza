@@ -1,0 +1,61 @@
+
+program hello
+    implicit none
+    real :: br=100.0, As=350.0*43560.0 , H=50.0 , r=0.75*3600.0 , Qmax, y1=8 ,y2=18 , y3=28 , y4=30,sigmayi2,sigmayi
+    real :: T8 , T18 , T28 ,T30 , sigmaT, sigmaTiyi , beta , M=4 , Theta , Qs, n =0.045 , S=0.0008,zeta,ymax
+    real :: V , Xc ,D ,gamma1=0.95 , g=32.2 , Froude , Ubar , Ax,Vstar, Peak_stage1,Peak_stage2, Qx1, Qx2
+
+    T8=(((12.3-0)*(480+437)/2)+((40.5-12.3)*(437+456)/2))/(40.5-0)
+    T18=(((12.3-0)*(900+826)/2)+((40.5-12.3)*(826+858)/2))/(40.5-0)
+    T28=(((12.3-0)*(1300+1337)/2)+((40.5-12.3)*(1337+1338)/2))/(40.5-0)
+    !we have to use T30 instead of T38 because above T28 top widths increase very slowly
+    T30=(((12.3-0)*(1310+1351)/2)+((40.5-12.3)*(1351+1362)/2))/(40.5-0)
+    sigmayi = log10(y1) + log10(y2) + log10(y3) + log10(y4)
+    sigmayi2 = log10(y1)**2 + log10(y2)**2 + log10(y3)**2 + log10(y4)**2
+    sigmaT=log10(T8)+log10(T18)+log10(T28)+log10(T30)
+    sigmaTiyi=(log10(T8)*log10(y1))+(log10(T18)*log10(y2))+(log10(T28)*log10(y3))+(log10(T30)*log10(y4))
+
+    beta=(sigmaTiyi-((sigmayi*sigmaT)/M))/(sigmayi2-((sigmayi**2)/M))
+    Theta = 10**((sigmaT/M)-(beta*sigmayi/M))
+    Qmax = 3.1*br*((1.94*As/br)/(r+(1.94*As/(br*H**0.5))))**3
+    Qs = (1.49/n)*(S**0.5)*((y4)**(beta+(5.0/3.0)))*(Theta/((1+beta)**(5.0/3.0)))
+    zeta = (1.49/n)*(S**0.5)*(Theta/(beta+1)**(5.0/3.0))
+    V = As*H/2
+    Ubar = (1.49/n)*(S**0.5)*(D)**(2.0/3.0)
+    Froude = (Ubar)/((g*D)**0.5)
+    Vstar = V/(Ax*Xc)
+    !from the table --> Qx (12.3)=0.34Qmax
+    Qx1 = 0.34*Qmax
+    peak_stage1 = (Qx1/zeta)**(1/(beta+(5.0/3.0)))
+    !from the table --> Qx (40.5)=0.14Qmax
+    Qx2 = 0.14*Qmax
+    peak_stage2 = (Qx2/zeta)**(1/(beta+(5.0/3.0)))
+    if (Qs>Qmax) then
+        ymax = (Qmax/zeta)**(1/(beta+(5.0/3.0)))
+        else
+            ymax = (Qmax**(3.0/5.0))*(1/(zeta*((beta+1)**(5.0/3.0))*(y4**beta)))**(3.0/5.0) + (beta*y4/(beta+1))
+    end if
+
+    if (H<y4) then
+        Xc = ((beta+1)/Theta)*(V/(H**(beta-1)))*(6/(1+4*(0.5**(beta-1))))
+        else
+            Xc = (6*V)/((Theta*y4**beta)*(3*H-5*(beta*y4/(beta+1))))
+    end if
+
+    if (Qmax<Qs) then
+        D = gamma1*ymax/(beta+1)
+        else
+            D = gamma1*ymax - y4 + (y4/(beta+1))
+    end if
+    if (Qmax<Qs) then
+        Ax = Theta*((gamma1*ymax)**beta)*D
+        else
+            Ax = Theta*D*(y4**beta)
+    end if
+
+    print*, "The maximum flow and stage are :" , Qmax , ymax
+    print*, "Peak flow and Peak stage at 12.3 ft are :", Qx1,Peak_stage1
+    print*, "Peak flow and Peak stage at 40.5 ft are :", Qx2,Peak_stage2
+
+end program
+
